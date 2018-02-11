@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Facebbook authentication</title>
+    <style>
+        .btn{
+            display:inline-block;
+            padding:10px 20px;
+            color:#ddd;
+            background:blue;
+            text-decoration: none;
+            border-radius:6px;
+            font-size:18px;
+            font-weight:700;
+            transition: all .3s;
+        }
+        .btn:hover{
+            opacity:0.9;
+        }
+        .btn:active{
+            opacity:0.7;
+        }
+        #loginbtn ._4z_b{
+            width:200px!important;
+            height:40px!important;
+            background-repeat: 6px!important;
+            background:#34495e!important;
+        }
+    </style>
+</head>
+<body>
+    <a class="btn" onclick="logout()">Logout</a>
+    <a class="btn" onclick="login()">Login</a>
+    <!-- <fb:login-button 
+    id="loginbtn"
+    scope="public_profile,email,user_birthday"
+    onlogin="checkLoginState();"> -->
+    <!-- </fb:login-button> -->
+    <div id="datalist"></div>
+    <div id="feedlist"></div>
+    
+    <script>
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '144834686183357',
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v2.12'
+            });
+
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+            FB.AppEvents.logPageView();   
+            
+        };
+        
+        (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        function statusChangeCallback(response) {
+            if(response.status === 'connected'){
+                var accessToken = response.authResponse.accessToken;
+                console.log('accessToken', accessToken, 'logged in and authenticated');
+                testAPI();
+            } else {
+                console.log('Not authenticated');
+            }
+        };
+
+
+        function checkLoginState() {
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        }
+
+        function login(){
+            FB.login(function(response) {
+            // handle the response
+            if(response && !response.error){
+                checkLoginState();
+            }
+            }, {scope: 'public_profile,email,user_birthday'});
+        }
+
+        function logout(e){
+            // e.preventDefault();
+            console.log(e);
+            FB.logout(function(response){
+                console.log(response, 'logout true');
+                if(response && !response.error){
+                    destroyView();
+                }
+            })
+        }
+
+        function testAPI(){
+            FB.api('/me?fields=name,email', function(response){
+                if(response && !response.error){
+                    console.log(response, 'api response');
+                    buildView(response);
+                }
+            });
+
+            FB.api('/me/feed', function(response){
+                if(response && !response.error){
+                    console.log(response, 'feed list');
+                    buildFeedView(response)
+                }
+            });
+        }
+
+        function buildView(data){
+            let profile = `
+            <dd>
+                <dt>${data.name}</dt>
+                <dt>${data.email}</dt>
+                <dt>${data.id}</dt>
+            </dd>
+            `;
+            document.getElementById('datalist').innerHTML = profile;
+        }
+
+        function buildFeedView(feed){
+            let feedlist = `<h3>Latest posts</h3>`;
+            for(let i in feed.data){
+                if(feed.data[i].message){
+                    feedlist += `
+                    <div>
+                        ${feed.data[i].message}
+                    </div>
+                    `;
+                }
+            }
+            document.getElementById('feedlist').innerHTML = feedlist;
+        }
+
+        function destroyView(){
+            document.getElementById('datalist').innerHTML = 'You are logged out!Please log in.';
+        }
+
+
+        
+    </script>
+
+    
+</body>
+</html>
